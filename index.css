@@ -464,36 +464,64 @@ select.input-field {
     padding: 0;
     border-radius: var(--radius-md);
     transition: all var(--transition-normal);
+    position: relative;
 }
 
 .glass-wrapper.glass-active {
     padding: var(--spacing-lg);
     background: linear-gradient(135deg,
-            rgba(255, 255, 255, 0.25) 0%,
-            rgba(255, 255, 255, 0.1) 100%);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+            rgba(255, 255, 255, 0.4) 0%,
+            rgba(255, 255, 255, 0.15) 50%,
+            rgba(200, 220, 255, 0.2) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: var(--radius-lg);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+        0 8px 32px rgba(0, 0, 0, 0.15),
+        0 0 80px rgba(100, 180, 255, 0.1),
+        inset 0 2px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -2px 0 rgba(255, 255, 255, 0.2);
 }
 
-[data-theme="dark"] .glass-wrapper.glass-active {
+.glass-wrapper.glass-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: linear-gradient(135deg,
-            rgba(255, 255, 255, 0.1) 0%,
-            rgba(255, 255, 255, 0.05) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+            rgba(255, 255, 255, 0.3) 0%,
+            transparent 50%);
+    border-radius: var(--radius-lg);
+    pointer-events: none;
 }
 
 .glass-wrapper.glass-active .qr-image {
     border-radius: var(--radius-md);
+    opacity: 0.88;
+    filter: contrast(1.1) brightness(1.05);
+    mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] .glass-wrapper.glass-active {
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.15) 0%,
+            rgba(255, 255, 255, 0.05) 50%,
+            rgba(100, 150, 255, 0.1) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(100, 180, 255, 0.15),
+        inset 0 2px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -2px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .glass-wrapper.glass-active .qr-image {
+    opacity: 0.92;
+    filter: contrast(1.15) brightness(1.1) saturate(0.9);
+    mix-blend-mode: screen;
 }
 
 /* ============================================
