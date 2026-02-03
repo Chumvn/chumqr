@@ -1,7 +1,6 @@
 /**
- * CHUM VietQR Generator
- * Tab 1: VietQR Generator (VietQR.io API)
- * Tab 2: OCR - Text Recognition from Image (Tesseract.js)
+ * CHUM QR Generator
+ * VietQR with Searchable Bank Dropdown & Glassmorphism Effect
  * Designed by CHUM / GIANG PRO
  */
 
@@ -10,7 +9,8 @@
 // ============================================
 let BANKS = [];
 let generatedImageUrl = null;
-let ocrFile = null;
+let selectedBank = null;
+let isGlassEffect = false;
 
 // ============================================
 // INIT
@@ -19,43 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     loadBankList();
     initEventListeners();
-    initTabs();
-    initOCR();
+    initBankSearch();
 });
-
-// ============================================
-// TABS
-// ============================================
-function initTabs() {
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabId = btn.dataset.tab;
-            switchTab(tabId);
-        });
-    });
-}
-
-function switchTab(tabId) {
-    // Update buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabId);
-    });
-
-    // Update content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-
-    if (tabId === 'qr') {
-        document.getElementById('tabQR').classList.add('active');
-    } else {
-        document.getElementById('tabOCR').classList.add('active');
-    }
-
-    // Hide QR preview when switching
-    document.getElementById('previewCard').classList.remove('visible');
-}
 
 // ============================================
 // THEME TOGGLE
@@ -78,8 +43,6 @@ function toggleTheme() {
 // LOAD BANK LIST FROM VIETQR.IO API
 // ============================================
 async function loadBankList() {
-    const select = document.getElementById('bankSelect');
-
     try {
         const response = await fetch('https://api.vietqr.io/v2/banks');
         const result = await response.json();
@@ -87,23 +50,89 @@ async function loadBankList() {
         if (result.code === '00' && result.data) {
             BANKS = result.data.filter(bank => bank.transferSupported === 1);
             BANKS.sort((a, b) => a.shortName.localeCompare(b.shortName));
-
-            BANKS.forEach(bank => {
-                const option = document.createElement('option');
-                option.value = bank.bin;
-                option.textContent = `${bank.shortName} - ${bank.name}`;
-                option.dataset.code = bank.code;
-                option.dataset.shortName = bank.shortName;
-                select.appendChild(option);
-            });
         }
     } catch (error) {
         console.error('Failed to load bank list:', error);
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'Lỗi tải danh sách ngân hàng';
-        select.appendChild(option);
     }
+}
+
+// ============================================
+// SEARCHABLE BANK DROPDOWN
+// ============================================
+function initBankSearch() {
+    const searchInput = document.getElementById('bankSearch');
+    const dropdown = document.getElementById('bankDropdown');
+
+    // Show dropdown on focus
+    searchInput.addEventListener('focus', () => {
+        showBankDropdown('');
+    });
+
+    // Filter on input
+    searchInput.addEventListener('input', (e) => {
+        showBankDropdown(e.target.value);
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-select-wrapper')) {
+            dropdown.classList.remove('show');
+        }
+    });
+}
+
+function showBankDropdown(filter) {
+    const dropdown = document.getElementById('bankDropdown');
+    const filterLower = filter.toLowerCase().trim();
+
+    // Filter banks
+    let filteredBanks = BANKS;
+    if (filterLower) {
+        filteredBanks = BANKS.filter(bank =>
+            bank.shortName.toLowerCase().includes(filterLower) ||
+            bank.name.toLowerCase().includes(filterLower) ||
+            bank.code.toLowerCase().includes(filterLower)
+        );
+    }
+
+    // Build dropdown HTML
+    if (filteredBanks.length === 0) {
+        dropdown.innerHTML = '<div class="dropdown-item no-result">Không tìm thấy ngân hàng</div>';
+    } else {
+        dropdown.innerHTML = filteredBanks.map(bank => `
+            <div class="dropdown-item" data-bin="${bank.bin}" data-code="${bank.code}" data-name="${bank.name}" data-short="${bank.shortName}">
+                <img src="${bank.logo}" alt="${bank.shortName}" onerror="this.style.display='none'">
+                <div class="bank-info">
+                    <span class="bank-short">${bank.shortName}</span>
+                    <span class="bank-name">${bank.name}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Add click handlers
+    dropdown.querySelectorAll('.dropdown-item:not(.no-result)').forEach(item => {
+        item.addEventListener('click', () => selectBank(item));
+    });
+
+    dropdown.classList.add('show');
+}
+
+function selectBank(item) {
+    const searchInput = document.getElementById('bankSearch');
+    const bankBinInput = document.getElementById('bankBin');
+    const dropdown = document.getElementById('bankDropdown');
+
+    selectedBank = {
+        bin: item.dataset.bin,
+        code: item.dataset.code,
+        name: item.dataset.name,
+        shortName: item.dataset.short
+    };
+
+    searchInput.value = `${selectedBank.shortName} - ${selectedBank.name}`;
+    bankBinInput.value = selectedBank.bin;
+    dropdown.classList.remove('show');
 }
 
 // ============================================
@@ -111,17 +140,16 @@ async function loadBankList() {
 // ============================================
 function initEventListeners() {
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-
-    // QR Tab
     document.getElementById('generateBtn').addEventListener('click', generateQR);
     document.getElementById('amount').addEventListener('input', formatAmountInput);
     document.getElementById('downloadBtn').addEventListener('click', downloadQR);
     document.getElementById('qrImage').addEventListener('click', downloadQR);
 
-    // OCR Tab
-    document.getElementById('ocrBtn').addEventListener('click', runOCR);
-    document.getElementById('copyResult').addEventListener('click', copyResult);
-    document.getElementById('removeImage').addEventListener('click', removeOCRImage);
+    // Glassmorphism toggle
+    document.getElementById('glassToggle').addEventListener('change', (e) => {
+        isGlassEffect = e.target.checked;
+        updateGlassEffect();
+    });
 }
 
 // ============================================
@@ -156,27 +184,33 @@ function removeVietnameseDiacritics(str) {
 }
 
 // ============================================
-// TAB 1: VIETQR GENERATOR
+// GLASSMORPHISM EFFECT
+// ============================================
+function updateGlassEffect() {
+    const wrapper = document.getElementById('glassWrapper');
+    if (isGlassEffect) {
+        wrapper.classList.add('glass-active');
+    } else {
+        wrapper.classList.remove('glass-active');
+    }
+}
+
+// ============================================
+// GENERATE QR
 // ============================================
 function generateQR() {
-    const bankBin = document.getElementById('bankSelect').value;
+    const bankBin = document.getElementById('bankBin').value;
     const accountNumber = document.getElementById('accountNumber').value.trim();
     const accountName = document.getElementById('accountName').value.trim();
     const amount = document.getElementById('amount').value;
     const memo = document.getElementById('memo').value.trim();
 
-    if (!bankBin) {
+    if (!bankBin || !selectedBank) {
         alert('Vui lòng chọn ngân hàng!');
         return;
     }
     if (!accountNumber) {
         alert('Vui lòng nhập số tài khoản!');
-        return;
-    }
-
-    const selectedBank = BANKS.find(b => b.bin === bankBin);
-    if (!selectedBank) {
-        alert('Không tìm thấy thông tin ngân hàng!');
         return;
     }
 
@@ -219,6 +253,7 @@ function generateQR() {
     qrImage.onload = () => {
         loadingIndicator.style.display = 'none';
         qrImage.style.display = 'block';
+        updateGlassEffect();
     };
 
     qrImage.onerror = () => {
@@ -249,15 +284,40 @@ function generateQR() {
 // DOWNLOAD QR IMAGE
 // ============================================
 async function downloadQR() {
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const accountNumber = document.getElementById('accountNumber').value.trim();
+    const filename = `CHUMQR-${accountNumber || 'code'}-${timestamp}.png`;
+
+    if (isGlassEffect) {
+        // Use html2canvas for glassmorphism effect
+        const wrapper = document.getElementById('glassWrapper');
+        try {
+            const canvas = await html2canvas(wrapper, {
+                backgroundColor: null,
+                scale: 2
+            });
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        } catch (error) {
+            console.error('Download failed:', error);
+            // Fallback to direct download
+            downloadDirect(filename);
+        }
+    } else {
+        downloadDirect(filename);
+    }
+}
+
+async function downloadDirect(filename) {
     if (!generatedImageUrl) return;
 
     try {
         const response = await fetch(generatedImageUrl);
         const blob = await response.blob();
         const link = document.createElement('a');
-        const timestamp = new Date().toISOString().slice(0, 10);
-        const accountNumber = document.getElementById('accountNumber').value.trim();
-        link.download = `VietQR-${accountNumber || 'code'}-${timestamp}.png`;
+        link.download = filename;
         link.href = URL.createObjectURL(blob);
         link.click();
         URL.revokeObjectURL(link.href);
@@ -265,169 +325,4 @@ async function downloadQR() {
         console.error('Download failed:', error);
         window.open(generatedImageUrl, '_blank');
     }
-}
-
-// ============================================
-// TAB 2: OCR - TEXT RECOGNITION
-// ============================================
-function initOCR() {
-    const uploadZone = document.getElementById('uploadZone');
-    const fileInput = document.getElementById('ocrFileInput');
-
-    // Click to upload
-    uploadZone.addEventListener('click', () => fileInput.click());
-
-    // File selected
-    fileInput.addEventListener('change', handleFileSelect);
-
-    // Drag and drop
-    uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('dragover');
-    });
-
-    uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('dragover');
-    });
-
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFile(files[0]);
-        }
-    });
-}
-
-function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) {
-        handleFile(file);
-    }
-}
-
-function handleFile(file) {
-    // Validate file type
-    if (!file.type.match('image.*')) {
-        alert('Vui lòng chọn file ảnh!');
-        return;
-    }
-
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        alert('File quá lớn! Tối đa 10MB.');
-        return;
-    }
-
-    ocrFile = file;
-
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        document.getElementById('ocrImage').src = e.target.result;
-        document.getElementById('ocrPreview').style.display = 'block';
-        document.getElementById('uploadZone').style.display = 'none';
-        document.getElementById('ocrBtn').disabled = false;
-    };
-    reader.readAsDataURL(file);
-}
-
-function removeOCRImage() {
-    ocrFile = null;
-    document.getElementById('ocrPreview').style.display = 'none';
-    document.getElementById('uploadZone').style.display = 'flex';
-    document.getElementById('ocrBtn').disabled = true;
-    document.getElementById('ocrFileInput').value = '';
-    document.getElementById('ocrResult').style.display = 'none';
-    document.getElementById('ocrProgress').style.display = 'none';
-}
-
-async function runOCR() {
-    if (!ocrFile) return;
-
-    const language = document.getElementById('ocrLanguage').value;
-    const progressEl = document.getElementById('ocrProgress');
-    const progressFill = document.getElementById('progressFill');
-    const progressText = document.getElementById('progressText');
-    const resultEl = document.getElementById('ocrResult');
-    const ocrTextEl = document.getElementById('ocrText');
-
-    // Show progress
-    progressEl.style.display = 'block';
-    resultEl.style.display = 'none';
-    document.getElementById('ocrBtn').disabled = true;
-    progressFill.style.width = '30%';
-    progressText.textContent = 'Đang tải ảnh lên...';
-
-    // OCR.space API - Free public key
-    const API_KEY = 'K85730633088957';
-
-    // Map language codes
-    const langMap = {
-        'vie': 'vie',
-        'eng': 'eng',
-        'vie+eng': 'vie'  // OCR.space doesn't support multiple, use Vietnamese
-    };
-
-    try {
-        // Prepare form data
-        const formData = new FormData();
-        formData.append('file', ocrFile);
-        formData.append('language', langMap[language] || 'vie');
-        formData.append('isOverlayRequired', 'false');
-        formData.append('OCREngine', '2');  // Engine 2 is better for Asian languages
-
-        progressFill.style.width = '60%';
-        progressText.textContent = 'Đang nhận dạng văn bản...';
-
-        const response = await fetch('https://api.ocr.space/parse/image', {
-            method: 'POST',
-            headers: {
-                'apikey': API_KEY
-            },
-            body: formData
-        });
-
-        const result = await response.json();
-
-        progressFill.style.width = '100%';
-        progressText.textContent = 'Hoàn thành!';
-
-        if (result.IsErroredOnProcessing) {
-            throw new Error(result.ErrorMessage || 'OCR processing failed');
-        }
-
-        if (result.ParsedResults && result.ParsedResults.length > 0) {
-            const text = result.ParsedResults.map(r => r.ParsedText).join('\n').trim();
-
-            // Show result
-            setTimeout(() => {
-                progressEl.style.display = 'none';
-                resultEl.style.display = 'block';
-                ocrTextEl.value = text || 'Không nhận dạng được văn bản trong ảnh.';
-            }, 500);
-        } else {
-            throw new Error('No text found');
-        }
-
-    } catch (error) {
-        console.error('OCR failed:', error);
-        progressEl.style.display = 'none';
-        alert('Lỗi nhận dạng! ' + (error.message || 'Vui lòng thử lại.'));
-    }
-
-    document.getElementById('ocrBtn').disabled = false;
-}
-
-function copyResult() {
-    const text = document.getElementById('ocrText').value;
-    navigator.clipboard.writeText(text).then(() => {
-        const btn = document.getElementById('copyResult');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '✓ Đã copy';
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-        }, 2000);
-    });
 }

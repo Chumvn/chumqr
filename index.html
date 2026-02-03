@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CHUM VietQR Generator</title>
+    <title>CHUM QR Generator</title>
     <meta name="description" content="Tạo mã QR thanh toán VietQR chuẩn NAPAS. Quét được mọi app ngân hàng.">
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💳</text></svg>">
@@ -22,7 +22,7 @@
         <div class="header-content">
             <div class="logo">
                 <span class="logo-icon">💳</span>
-                <h1>CHUM VietQR</h1>
+                <h1>CHUM QR</h1>
             </div>
             <div class="header-actions">
                 <a href="https://github.com/Chumvn/chumqr" target="_blank" class="github-link" title="GitHub">
@@ -55,38 +55,17 @@
 
     <!-- Main Content -->
     <main class="main-container">
-        <!-- Tabs -->
-        <div class="tabs-container">
-            <button class="tab-btn active" data-tab="qr">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <rect x="7" y="7" width="3" height="3"></rect>
-                    <rect x="14" y="7" width="3" height="3"></rect>
-                    <rect x="7" y="14" width="3" height="3"></rect>
-                </svg>
-                Tạo QR
-            </button>
-            <button class="tab-btn" data-tab="ocr">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-                Nhận dạng ảnh
-            </button>
-        </div>
-
-        <!-- Tab 1: VietQR Generator -->
-        <section class="card form-card tab-content active" id="tabQR">
+        <!-- Input Form Card -->
+        <section class="card form-card">
             <h2 class="card-title">Thông tin chuyển khoản</h2>
 
             <div class="form-group">
-                <label for="bankSelect">Ngân hàng</label>
-                <div class="select-wrapper">
-                    <select id="bankSelect" class="input-field">
-                        <option value="">-- Chọn ngân hàng --</option>
-                    </select>
+                <label for="bankSearch">Ngân hàng</label>
+                <div class="search-select-wrapper">
+                    <input type="text" id="bankSearch" class="input-field" placeholder="Nhập tên ngân hàng để tìm..."
+                        autocomplete="off">
+                    <input type="hidden" id="bankBin" value="">
+                    <div class="search-dropdown" id="bankDropdown"></div>
                 </div>
             </div>
 
@@ -112,6 +91,19 @@
                 <input type="text" id="memo" class="input-field" placeholder="Nội dung" autocomplete="off">
             </div>
 
+            <!-- Glassmorphism Toggle -->
+            <div class="form-group toggle-group">
+                <label>Hiệu ứng Glassmorphism</label>
+                <div class="toggle-wrapper">
+                    <span class="toggle-label">Tắt</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="glassToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label active">Bật</span>
+                </div>
+            </div>
+
             <button id="generateBtn" class="btn btn-primary">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -121,71 +113,6 @@
                 </svg>
                 Tạo mã VietQR
             </button>
-        </section>
-
-        <!-- Tab 2: OCR - Text Recognition -->
-        <section class="card form-card tab-content" id="tabOCR">
-            <h2 class="card-title">Nhận dạng văn bản từ ảnh</h2>
-
-            <div class="form-group">
-                <label for="ocrLanguage">Ngôn ngữ</label>
-                <div class="select-wrapper">
-                    <select id="ocrLanguage" class="input-field">
-                        <option value="vie">Tiếng Việt</option>
-                        <option value="eng">English</option>
-                        <option value="vie+eng">Việt + English</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="upload-zone" id="uploadZone">
-                <input type="file" id="ocrFileInput" accept="image/*" hidden>
-                <div class="upload-content">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="1.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <p>Kéo thả ảnh hoặc <span>chọn file</span></p>
-                    <p class="upload-hint">PNG, JPG, JPEG - Tối đa 10MB</p>
-                </div>
-            </div>
-
-            <div id="ocrPreview" class="ocr-preview" style="display: none;">
-                <img id="ocrImage" alt="Preview">
-                <button id="removeImage" class="btn-remove" title="Xóa ảnh">✕</button>
-            </div>
-
-            <button id="ocrBtn" class="btn btn-primary" disabled>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                Nhận dạng văn bản
-            </button>
-
-            <div id="ocrProgress" class="ocr-progress" style="display: none;">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <p id="progressText">Đang xử lý...</p>
-            </div>
-
-            <div id="ocrResult" class="ocr-result" style="display: none;">
-                <div class="result-header">
-                    <h3>Kết quả nhận dạng</h3>
-                    <button id="copyResult" class="btn btn-small">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                        Copy
-                    </button>
-                </div>
-                <textarea id="ocrText" readonly></textarea>
-            </div>
         </section>
 
         <!-- QR Preview & Export -->
@@ -198,7 +125,10 @@
                     <div class="spinner"></div>
                     <span>Đang tạo mã QR...</span>
                 </div>
-                <img id="qrImage" class="qr-image" alt="VietQR Code" style="display: none;" crossorigin="anonymous">
+                <!-- Glassmorphism wrapper -->
+                <div id="glassWrapper" class="glass-wrapper">
+                    <img id="qrImage" class="qr-image" alt="VietQR Code" style="display: none;" crossorigin="anonymous">
+                </div>
             </div>
 
             <!-- Account Info Display -->
@@ -241,6 +171,7 @@
     </footer>
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="app.js"></script>
 </body>
 

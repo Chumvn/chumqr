@@ -309,6 +309,194 @@ select.input-field {
 }
 
 /* ============================================
+   SEARCHABLE BANK DROPDOWN
+   ============================================ */
+.search-select-wrapper {
+    position: relative;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-neumorphic);
+    z-index: 100;
+    display: none;
+    margin-top: var(--spacing-xs);
+}
+
+.search-dropdown.show {
+    display: block;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    border-bottom: 1px solid var(--shadow-dark);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: var(--input-bg);
+}
+
+.dropdown-item.no-result {
+    color: var(--text-secondary);
+    cursor: default;
+    justify-content: center;
+}
+
+.dropdown-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    padding: 4px;
+}
+
+.bank-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.bank-short {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.bank-name {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   TOGGLE SWITCH
+   ============================================ */
+.toggle-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.toggle-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.toggle-label.active {
+    color: var(--accent-secondary);
+    font-weight: 600;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--shadow-dark);
+    border-radius: 26px;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-neumorphic-inset);
+}
+
+.toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: var(--card-bg);
+    border-radius: 50%;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-neumorphic-sm);
+}
+
+.toggle-switch input:checked+.toggle-slider {
+    background: var(--accent-gradient);
+}
+
+.toggle-switch input:checked+.toggle-slider::before {
+    transform: translateX(24px);
+    background: #fff;
+}
+
+/* ============================================
+   GLASSMORPHISM QR WRAPPER
+   ============================================ */
+.glass-wrapper {
+    display: inline-block;
+    padding: 0;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+}
+
+.glass-wrapper.glass-active {
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.25) 0%,
+            rgba(255, 255, 255, 0.1) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-lg);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .glass-wrapper.glass-active {
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-wrapper.glass-active .qr-image {
+    border-radius: var(--radius-md);
+}
+
+/* ============================================
    BUTTONS
    ============================================ */
 .btn {
