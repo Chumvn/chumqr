@@ -90,18 +90,13 @@
             <div class="form-group">
                 <label for="memo">Nội dung chuyển khoản - Tùy chọn</label>
                 <input type="text" id="memo" class="input-field" placeholder="Nội dung" autocomplete="off">
-            </div>
-
-            <!-- Glassmorphism Toggle -->
-            <div class="form-group toggle-group">
-                <label>Hiệu ứng Glassmorphism</label>
-                <div class="toggle-wrapper">
-                    <span class="toggle-label">Tắt</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="glassToggle">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label active">Bật</span>
+                <div class="memo-suggestions" id="memoSuggestions">
+                    <button type="button" class="memo-chip" data-memo="Giao dich">🤝 Giao dịch đơn giản</button>
+                    <button type="button" class="memo-chip" data-memo="Gui ban chut tien">💸 Gửi bạn chút tiền</button>
+                    <button type="button" class="memo-chip" data-memo="Chuyen tien nha">😊 Chuyển tiền nha</button>
+                    <button type="button" class="memo-chip" data-memo="Tien nhu da noi">👍 Tiền như đã nói</button>
+                    <button type="button" class="memo-chip" data-memo="Chuyen lai">🔁 Chuyển lại</button>
+                    <button type="button" class="memo-chip" data-memo="Gui chut yeu thuong">💖 Gửi chút yêu thương</button>
                 </div>
             </div>
 
@@ -167,7 +162,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <p>Designed & built by <strong>CHUM / GIANG PRO</strong></p>
+        <p>Designed & built by <strong>CHUM</strong></p>
         <p class="footer-note">VietQR chuẩn NAPAS 247 · Quét được mọi app ngân hàng</p>
     </footer>
 
