@@ -357,33 +357,64 @@ async function runOCR() {
     progressEl.style.display = 'block';
     resultEl.style.display = 'none';
     document.getElementById('ocrBtn').disabled = true;
+    progressFill.style.width = '30%';
+    progressText.textContent = 'Đang tải ảnh lên...';
+
+    // OCR.space API - Free public key
+    const API_KEY = 'K85730633088957';
+
+    // Map language codes
+    const langMap = {
+        'vie': 'vie',
+        'eng': 'eng',
+        'vie+eng': 'vie'  // OCR.space doesn't support multiple, use Vietnamese
+    };
 
     try {
-        const result = await Tesseract.recognize(
-            ocrFile,
-            language,
-            {
-                logger: (m) => {
-                    if (m.status === 'recognizing text') {
-                        const percent = Math.round(m.progress * 100);
-                        progressFill.style.width = percent + '%';
-                        progressText.textContent = `Đang nhận dạng... ${percent}%`;
-                    } else if (m.status === 'loading language traineddata') {
-                        progressText.textContent = 'Đang tải ngôn ngữ...';
-                    }
-                }
-            }
-        );
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('file', ocrFile);
+        formData.append('language', langMap[language] || 'vie');
+        formData.append('isOverlayRequired', 'false');
+        formData.append('OCREngine', '2');  // Engine 2 is better for Asian languages
 
-        // Show result
-        progressEl.style.display = 'none';
-        resultEl.style.display = 'block';
-        ocrTextEl.value = result.data.text.trim() || 'Không nhận dạng được văn bản trong ảnh.';
+        progressFill.style.width = '60%';
+        progressText.textContent = 'Đang nhận dạng văn bản...';
+
+        const response = await fetch('https://api.ocr.space/parse/image', {
+            method: 'POST',
+            headers: {
+                'apikey': API_KEY
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        progressFill.style.width = '100%';
+        progressText.textContent = 'Hoàn thành!';
+
+        if (result.IsErroredOnProcessing) {
+            throw new Error(result.ErrorMessage || 'OCR processing failed');
+        }
+
+        if (result.ParsedResults && result.ParsedResults.length > 0) {
+            const text = result.ParsedResults.map(r => r.ParsedText).join('\n').trim();
+
+            // Show result
+            setTimeout(() => {
+                progressEl.style.display = 'none';
+                resultEl.style.display = 'block';
+                ocrTextEl.value = text || 'Không nhận dạng được văn bản trong ảnh.';
+            }, 500);
+        } else {
+            throw new Error('No text found');
+        }
 
     } catch (error) {
         console.error('OCR failed:', error);
         progressEl.style.display = 'none';
-        alert('Lỗi nhận dạng! Vui lòng thử lại.');
+        alert('Lỗi nhận dạng! ' + (error.message || 'Vui lòng thử lại.'));
     }
 
     document.getElementById('ocrBtn').disabled = false;
