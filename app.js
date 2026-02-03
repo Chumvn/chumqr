@@ -1,7 +1,7 @@
 /**
  * CHUM VietQR Generator
- * Tab 1: Auto (VietQR.io API)
- * Tab 2: Manual (Local QR Generation)
+ * Tab 1: VietQR Generator (VietQR.io API)
+ * Tab 2: OCR - Text Recognition from Image (Tesseract.js)
  * Designed by CHUM / GIANG PRO
  */
 
@@ -10,7 +10,7 @@
 // ============================================
 let BANKS = [];
 let generatedImageUrl = null;
-let currentMode = 'auto'; // 'auto' or 'manual'
+let ocrFile = null;
 
 // ============================================
 // INIT
@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBankList();
     initEventListeners();
     initTabs();
+    initOCR();
 });
 
 // ============================================
@@ -36,8 +37,6 @@ function initTabs() {
 }
 
 function switchTab(tabId) {
-    currentMode = tabId;
-
     // Update buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tabId);
@@ -48,13 +47,13 @@ function switchTab(tabId) {
         content.classList.remove('active');
     });
 
-    if (tabId === 'auto') {
-        document.getElementById('tabAuto').classList.add('active');
+    if (tabId === 'qr') {
+        document.getElementById('tabQR').classList.add('active');
     } else {
-        document.getElementById('tabManual').classList.add('active');
+        document.getElementById('tabOCR').classList.add('active');
     }
 
-    // Hide preview when switching
+    // Hide QR preview when switching
     document.getElementById('previewCard').classList.remove('visible');
 }
 
@@ -80,20 +79,15 @@ function toggleTheme() {
 // ============================================
 async function loadBankList() {
     const select = document.getElementById('bankSelect');
-    const manualSelect = document.getElementById('manualBankSelect');
 
     try {
         const response = await fetch('https://api.vietqr.io/v2/banks');
         const result = await response.json();
 
         if (result.code === '00' && result.data) {
-            // Filter only banks that support transfer
             BANKS = result.data.filter(bank => bank.transferSupported === 1);
-
-            // Sort by shortName
             BANKS.sort((a, b) => a.shortName.localeCompare(b.shortName));
 
-            // Populate both selects
             BANKS.forEach(bank => {
                 const option = document.createElement('option');
                 option.value = bank.bin;
@@ -101,9 +95,6 @@ async function loadBankList() {
                 option.dataset.code = bank.code;
                 option.dataset.shortName = bank.shortName;
                 select.appendChild(option);
-
-                // Clone for manual select
-                manualSelect.appendChild(option.cloneNode(true));
             });
         }
     } catch (error) {
@@ -112,7 +103,6 @@ async function loadBankList() {
         option.value = '';
         option.textContent = 'Lỗi tải danh sách ngân hàng';
         select.appendChild(option);
-        manualSelect.appendChild(option.cloneNode(true));
     }
 }
 
@@ -122,24 +112,23 @@ async function loadBankList() {
 function initEventListeners() {
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-    // Auto tab
-    document.getElementById('generateBtn').addEventListener('click', generateQRAuto);
-    document.getElementById('amount').addEventListener('input', () => formatAmountInput('amount'));
-
-    // Manual tab
-    document.getElementById('manualGenerateBtn').addEventListener('click', generateQRManual);
-    document.getElementById('manualAmount').addEventListener('input', () => formatAmountInput('manualAmount'));
-
-    // Download
+    // QR Tab
+    document.getElementById('generateBtn').addEventListener('click', generateQR);
+    document.getElementById('amount').addEventListener('input', formatAmountInput);
     document.getElementById('downloadBtn').addEventListener('click', downloadQR);
     document.getElementById('qrImage').addEventListener('click', downloadQR);
+
+    // OCR Tab
+    document.getElementById('ocrBtn').addEventListener('click', runOCR);
+    document.getElementById('copyResult').addEventListener('click', copyResult);
+    document.getElementById('removeImage').addEventListener('click', removeOCRImage);
 }
 
 // ============================================
 // FORMAT AMOUNT - #,##0
 // ============================================
-function formatAmountInput(inputId) {
-    const input = document.getElementById(inputId);
+function formatAmountInput() {
+    const input = document.getElementById('amount');
     let value = input.value.replace(/[^\d]/g, '');
     if (value) {
         value = parseInt(value, 10).toLocaleString('en-US');
@@ -167,9 +156,9 @@ function removeVietnameseDiacritics(str) {
 }
 
 // ============================================
-// TAB 1: AUTO - VIETQR.IO QUICK LINK
+// TAB 1: VIETQR GENERATOR
 // ============================================
-function generateQRAuto() {
+function generateQR() {
     const bankBin = document.getElementById('bankSelect').value;
     const accountNumber = document.getElementById('accountNumber').value.trim();
     const accountName = document.getElementById('accountName').value.trim();
@@ -222,12 +211,10 @@ function generateQRAuto() {
 
     // Display QR image
     const qrImage = document.getElementById('qrImage');
-    const qrCanvas = document.getElementById('qrCanvas');
     const loadingIndicator = document.getElementById('loadingIndicator');
 
     loadingIndicator.style.display = 'flex';
     qrImage.style.display = 'none';
-    qrCanvas.style.display = 'none';
 
     qrImage.onload = () => {
         loadingIndicator.style.display = 'none';
@@ -243,223 +230,9 @@ function generateQRAuto() {
     qrImage.src = qrUrl;
 
     // Update info display
-    updateInfoDisplay(accountName, accountNumber, selectedBank.name, amount);
-
-    document.getElementById('previewCard').classList.add('visible');
-    document.getElementById('previewCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-// ============================================
-// TAB 2: MANUAL - LOCAL QR GENERATION
-// ============================================
-function generateQRManual() {
-    const bankBin = document.getElementById('manualBankSelect').value;
-    const accountNumber = document.getElementById('manualAccountNumber').value.trim();
-    const accountName = document.getElementById('manualAccountName').value.trim();
-    const amount = document.getElementById('manualAmount').value;
-    const memo = document.getElementById('manualMemo').value.trim();
-
-    if (!bankBin) {
-        alert('Vui lòng chọn ngân hàng!');
-        return;
-    }
-    if (!accountNumber) {
-        alert('Vui lòng nhập số tài khoản!');
-        return;
-    }
-
-    const selectedBank = BANKS.find(b => b.bin === bankBin);
-    if (!selectedBank) {
-        alert('Không tìm thấy thông tin ngân hàng!');
-        return;
-    }
-
-    // Generate VietQR EMVCo string
-    const qrString = generateVietQRString(bankBin, accountNumber, amount, memo);
-
-    // Render QR code on canvas
-    renderQRCanvas(qrString, selectedBank, accountName, accountNumber, amount);
-
-    generatedImageUrl = null; // Will use canvas for download
-
-    // Update info display
-    updateInfoDisplay(accountName, accountNumber, selectedBank.name, amount);
-
-    document.getElementById('previewCard').classList.add('visible');
-    document.getElementById('previewCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-// ============================================
-// VIETQR EMVCO STRING GENERATOR
-// ============================================
-function generateVietQRString(bankBin, accountNumber, amount, memo) {
-    function tlv(id, value) {
-        const len = value.length.toString().padStart(2, '0');
-        return id + len + value;
-    }
-
-    const field00 = tlv("00", "01");
-    const field01 = tlv("01", "12");
-
-    const subField38_00 = tlv("00", "A000000727");
-    const beneficiaryInfo = tlv("00", bankBin) + tlv("01", accountNumber);
-    const subField38_01 = tlv("01", beneficiaryInfo);
-    const subField38_02 = tlv("02", "QRIBFTTA");
-    const field38Content = subField38_00 + subField38_01 + subField38_02;
-    const field38 = tlv("38", field38Content);
-
-    const field53 = tlv("53", "704");
-
-    let field54 = "";
-    if (amount) {
-        const amountValue = amount.replace(/[^\d]/g, '');
-        if (amountValue && parseInt(amountValue) > 0) {
-            field54 = tlv("54", amountValue);
-        }
-    }
-
-    const field58 = tlv("58", "VN");
-
-    let field62 = "";
-    if (memo && memo.trim()) {
-        const memoClean = removeVietnameseDiacritics(memo.trim()).substring(0, 25);
-        const subField62_08 = tlv("08", memoClean);
-        field62 = tlv("62", subField62_08);
-    }
-
-    let qrString = field00 + field01 + field38 + field53 + field54 + field58 + field62;
-    qrString += "6304";
-    const crc = calculateCRC16(qrString);
-    qrString += crc;
-
-    return qrString;
-}
-
-function calculateCRC16(str) {
-    let crc = 0xFFFF;
-    const polynomial = 0x1021;
-
-    for (let i = 0; i < str.length; i++) {
-        crc ^= (str.charCodeAt(i) << 8);
-        for (let j = 0; j < 8; j++) {
-            if (crc & 0x8000) {
-                crc = ((crc << 1) ^ polynomial) & 0xFFFF;
-            } else {
-                crc = (crc << 1) & 0xFFFF;
-            }
-        }
-    }
-
-    return crc.toString(16).toUpperCase().padStart(4, '0');
-}
-
-// ============================================
-// RENDER QR ON CANVAS (MANUAL MODE)
-// ============================================
-function renderQRCanvas(qrString, bank, accountName, accountNumber, amount) {
-    const canvas = document.getElementById('qrCanvas');
-    const qrImage = document.getElementById('qrImage');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const ctx = canvas.getContext('2d');
-
-    loadingIndicator.style.display = 'none';
-    qrImage.style.display = 'none';
-    canvas.style.display = 'block';
-
-    // Canvas size
-    const width = 400;
-    const height = 500;
-    const qrSize = 280;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    // Clear
-    ctx.clearRect(0, 0, width, height);
-
-    // Background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-
-    // Border
-    ctx.strokeStyle = '#0066B3';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(2, 2, width - 4, height - 4);
-
-    // Header
-    ctx.fillStyle = '#0066B3';
-    ctx.font = 'bold 18px Outfit, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('VietQR', width / 2, 35);
-
-    // Generate QR
-    const qr = qrcode(0, 'M');
-    qr.addData(qrString);
-    qr.make();
-
-    const moduleCount = qr.getModuleCount();
-    const moduleSize = qrSize / moduleCount;
-    const qrX = (width - qrSize) / 2;
-    const qrY = 55;
-
-    ctx.fillStyle = '#000000';
-    for (let row = 0; row < moduleCount; row++) {
-        for (let col = 0; col < moduleCount; col++) {
-            if (qr.isDark(row, col)) {
-                ctx.fillRect(
-                    qrX + col * moduleSize,
-                    qrY + row * moduleSize,
-                    moduleSize,
-                    moduleSize
-                );
-            }
-        }
-    }
-
-    // Info section
-    const infoY = qrY + qrSize + 25;
-    ctx.textAlign = 'center';
-
-    // Bank name
-    ctx.fillStyle = '#0066B3';
-    ctx.font = 'bold 14px Inter, sans-serif';
-    ctx.fillText(bank.shortName, width / 2, infoY);
-
-    // Account number
-    ctx.fillStyle = '#333333';
-    ctx.font = 'bold 16px Inter, sans-serif';
-    ctx.fillText(accountNumber, width / 2, infoY + 25);
-
-    // Account name
-    if (accountName) {
-        ctx.fillStyle = '#666666';
-        ctx.font = '13px Inter, sans-serif';
-        ctx.fillText(accountName.toUpperCase(), width / 2, infoY + 45);
-    }
-
-    // Amount
-    if (amount) {
-        const amountValue = amount.replace(/[^\d]/g, '');
-        if (amountValue && parseInt(amountValue) > 0) {
-            ctx.fillStyle = '#00A650';
-            ctx.font = 'bold 16px Inter, sans-serif';
-            ctx.fillText(formatAmount(amount) + ' VND', width / 2, infoY + 70);
-        }
-    }
-
-    // Footer
-    ctx.fillStyle = '#999999';
-    ctx.font = '10px Inter, sans-serif';
-    ctx.fillText('CHUM VietQR', width / 2, height - 15);
-}
-
-// ============================================
-// UPDATE INFO DISPLAY
-// ============================================
-function updateInfoDisplay(accountName, accountNumber, bankName, amount) {
     document.getElementById('infoAccountName').textContent = accountName || 'Chủ tài khoản';
     document.getElementById('infoAccountNumber').textContent = accountNumber;
-    document.getElementById('infoBankName').textContent = bankName;
+    document.getElementById('infoBankName').textContent = selectedBank.name;
 
     if (amount) {
         document.getElementById('infoAmount').textContent = formatAmount(amount) + ' VND';
@@ -467,43 +240,163 @@ function updateInfoDisplay(accountName, accountNumber, bankName, amount) {
     } else {
         document.getElementById('amountRow').style.display = 'none';
     }
+
+    document.getElementById('previewCard').classList.add('visible');
+    document.getElementById('previewCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ============================================
 // DOWNLOAD QR IMAGE
 // ============================================
 async function downloadQR() {
-    const timestamp = new Date().toISOString().slice(0, 10);
-    let accountNumber = '';
+    if (!generatedImageUrl) return;
 
-    if (currentMode === 'auto') {
-        accountNumber = document.getElementById('accountNumber').value.trim();
-    } else {
-        accountNumber = document.getElementById('manualAccountNumber').value.trim();
-    }
-
-    const filename = `VietQR-${accountNumber || 'code'}-${timestamp}.png`;
-
-    if (generatedImageUrl) {
-        // Download from URL (auto mode)
-        try {
-            const response = await fetch(generatedImageUrl);
-            const blob = await response.blob();
-            const link = document.createElement('a');
-            link.download = filename;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-            URL.revokeObjectURL(link.href);
-        } catch (error) {
-            console.error('Download failed:', error);
-            window.open(generatedImageUrl, '_blank');
-        }
-    } else {
-        // Download from canvas (manual mode)
-        const canvas = document.getElementById('qrCanvas');
+    try {
+        const response = await fetch(generatedImageUrl);
+        const blob = await response.blob();
         const link = document.createElement('a');
-        link.download = filename;
-        link.href = canvas.toDataURL('image/png', 1.0);
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const accountNumber = document.getElementById('accountNumber').value.trim();
+        link.download = `VietQR-${accountNumber || 'code'}-${timestamp}.png`;
+        link.href = URL.createObjectURL(blob);
         link.click();
+        URL.revokeObjectURL(link.href);
+    } catch (error) {
+        console.error('Download failed:', error);
+        window.open(generatedImageUrl, '_blank');
     }
+}
+
+// ============================================
+// TAB 2: OCR - TEXT RECOGNITION
+// ============================================
+function initOCR() {
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('ocrFileInput');
+
+    // Click to upload
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    // File selected
+    fileInput.addEventListener('change', handleFileSelect);
+
+    // Drag and drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+}
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+        handleFile(file);
+    }
+}
+
+function handleFile(file) {
+    // Validate file type
+    if (!file.type.match('image.*')) {
+        alert('Vui lòng chọn file ảnh!');
+        return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert('File quá lớn! Tối đa 10MB.');
+        return;
+    }
+
+    ocrFile = file;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('ocrImage').src = e.target.result;
+        document.getElementById('ocrPreview').style.display = 'block';
+        document.getElementById('uploadZone').style.display = 'none';
+        document.getElementById('ocrBtn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeOCRImage() {
+    ocrFile = null;
+    document.getElementById('ocrPreview').style.display = 'none';
+    document.getElementById('uploadZone').style.display = 'flex';
+    document.getElementById('ocrBtn').disabled = true;
+    document.getElementById('ocrFileInput').value = '';
+    document.getElementById('ocrResult').style.display = 'none';
+    document.getElementById('ocrProgress').style.display = 'none';
+}
+
+async function runOCR() {
+    if (!ocrFile) return;
+
+    const language = document.getElementById('ocrLanguage').value;
+    const progressEl = document.getElementById('ocrProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const resultEl = document.getElementById('ocrResult');
+    const ocrTextEl = document.getElementById('ocrText');
+
+    // Show progress
+    progressEl.style.display = 'block';
+    resultEl.style.display = 'none';
+    document.getElementById('ocrBtn').disabled = true;
+
+    try {
+        const result = await Tesseract.recognize(
+            ocrFile,
+            language,
+            {
+                logger: (m) => {
+                    if (m.status === 'recognizing text') {
+                        const percent = Math.round(m.progress * 100);
+                        progressFill.style.width = percent + '%';
+                        progressText.textContent = `Đang nhận dạng... ${percent}%`;
+                    } else if (m.status === 'loading language traineddata') {
+                        progressText.textContent = 'Đang tải ngôn ngữ...';
+                    }
+                }
+            }
+        );
+
+        // Show result
+        progressEl.style.display = 'none';
+        resultEl.style.display = 'block';
+        ocrTextEl.value = result.data.text.trim() || 'Không nhận dạng được văn bản trong ảnh.';
+
+    } catch (error) {
+        console.error('OCR failed:', error);
+        progressEl.style.display = 'none';
+        alert('Lỗi nhận dạng! Vui lòng thử lại.');
+    }
+
+    document.getElementById('ocrBtn').disabled = false;
+}
+
+function copyResult() {
+    const text = document.getElementById('ocrText').value;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copyResult');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '✓ Đã copy';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+        }, 2000);
+    });
 }
