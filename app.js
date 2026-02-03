@@ -1,11 +1,11 @@
 /**
- * CHUM VietQR Frame Studio
- * VietQR EMVCo Standard Generator
+ * CHUM VietQR Generator
+ * VietQR EMVCo Standard - NAPAS Format
  * Designed by CHUM / GIANG PRO
  */
 
 // ============================================
-// BANK DATA (65+ Vietnamese Banks)
+// BANK DATA (Vietnamese Banks)
 // ============================================
 const BANKS = [
     { id: 17, code: "ICB", bin: "970415", name: "Ngân hàng TMCP Công thương Việt Nam", shortName: "VietinBank", logo: "https://cdn.vietqr.io/img/ICB.png" },
@@ -50,127 +50,12 @@ const BANKS = [
 ];
 
 // ============================================
-// TEMPLATES (12 Premium Designs)
-// ============================================
-const TEMPLATES = {
-    classic: {
-        name: "Classic",
-        icon: "📋",
-        bgColor: "#ffffff",
-        borderColor: "#e0e0e0",
-        textColor: "#333333",
-        accentColor: "#1a73e8"
-    },
-    neumorphism: {
-        name: "Soft UI",
-        icon: "🌸",
-        bgColor: "#e0e5ec",
-        borderColor: "#e0e5ec",
-        textColor: "#2d3436",
-        accentColor: "#6c5ce7",
-        shadow: true
-    },
-    glass: {
-        name: "Glass",
-        icon: "💎",
-        bgColor: "rgba(255,255,255,0.85)",
-        borderColor: "rgba(255,255,255,0.5)",
-        textColor: "#333333",
-        accentColor: "#00b4d8",
-        gradient: ["#667eea", "#764ba2"]
-    },
-    premiumBlack: {
-        name: "VIP Black",
-        icon: "👑",
-        bgColor: "#0a0a0a",
-        borderColor: "#1a1a1a",
-        textColor: "#ffd700",
-        accentColor: "#ffd700",
-        gradient: ["#0a0a0a", "#1a1a1a"],
-        premium: true
-    },
-    neonCyber: {
-        name: "Neon",
-        icon: "⚡",
-        bgColor: "#0f0f23",
-        borderColor: "#00ff88",
-        textColor: "#00ff88",
-        accentColor: "#ff00ff",
-        gradient: ["#0f0f23", "#1a1a3e"],
-        neon: true
-    },
-    hologram: {
-        name: "Hologram",
-        icon: "🌈",
-        bgColor: "#1a1a2e",
-        borderColor: "#ff6b6b",
-        textColor: "#ffffff",
-        accentColor: "#4ecdc4",
-        gradient: ["#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7"],
-        hologram: true
-    },
-    aurora: {
-        name: "Aurora",
-        icon: "🔮",
-        bgColor: "#0c1445",
-        borderColor: "#00d9ff",
-        textColor: "#00d9ff",
-        accentColor: "#ff6bcb",
-        gradient: ["#0c1445", "#1a237e", "#311b92"],
-        aurora: true
-    },
-    gradientPro: {
-        name: "Gradient",
-        icon: "💜",
-        bgColor: "#667eea",
-        borderColor: "#764ba2",
-        textColor: "#ffffff",
-        accentColor: "#ffecd2",
-        gradient: ["#667eea", "#764ba2"]
-    },
-    goldElite: {
-        name: "Gold VIP",
-        icon: "🏆",
-        bgColor: "#1a1a1a",
-        borderColor: "#d4af37",
-        textColor: "#d4af37",
-        accentColor: "#f4e4bc",
-        gradient: ["#1a1a1a", "#2d2d2d"],
-        gold: true
-    },
-    dark: {
-        name: "Dark",
-        icon: "🌙",
-        bgColor: "#1a1a2e",
-        borderColor: "#16213e",
-        textColor: "#e0e0e0",
-        accentColor: "#a29bfe"
-    },
-    floating: {
-        name: "Floating",
-        icon: "☁️",
-        bgColor: "#f8f9fa",
-        borderColor: "#dee2e6",
-        textColor: "#495057",
-        accentColor: "#845ef7",
-        gradient: ["#f093fb", "#f5576c"]
-    },
-    tet2026: {
-        name: "Tết 2026",
-        icon: "🧧",
-        bgColor: "#fff8e1",
-        borderColor: "#c9282d",
-        textColor: "#c9282d",
-        accentColor: "#ffd700",
-        decoration: "tet"
-    }
-};
-
-// ============================================
 // STATE
 // ============================================
-let currentTemplate = 'classic';
 let generatedQRData = null;
+let bankLogoLoaded = null;
+let napasLogoLoaded = null;
+let vietqrLogoLoaded = null;
 
 // ============================================
 // INIT
@@ -178,10 +63,25 @@ let generatedQRData = null;
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initBankSelect();
-    initTemplates();
     initEventListeners();
     formatAmountInput();
+    preloadLogos();
 });
+
+// ============================================
+// PRELOAD LOGOS
+// ============================================
+function preloadLogos() {
+    // Preload NAPAS logo
+    napasLogoLoaded = new Image();
+    napasLogoLoaded.crossOrigin = 'anonymous';
+    napasLogoLoaded.src = 'https://cdn.vietqr.io/img/NAPAS247.png';
+
+    // Preload VietQR logo
+    vietqrLogoLoaded = new Image();
+    vietqrLogoLoaded.crossOrigin = 'anonymous';
+    vietqrLogoLoaded.src = 'https://cdn.vietqr.io/img/vietqr.png';
+}
 
 // ============================================
 // THEME TOGGLE
@@ -218,36 +118,6 @@ function initBankSelect() {
 }
 
 // ============================================
-// TEMPLATES
-// ============================================
-function initTemplates() {
-    const grid = document.getElementById('templateGrid');
-
-    Object.entries(TEMPLATES).forEach(([key, template]) => {
-        const item = document.createElement('div');
-        item.className = `template-item template-${key}${key === currentTemplate ? ' active' : ''}`;
-        item.dataset.template = key;
-        item.innerHTML = `
-            <div class="template-preview">${template.icon}</div>
-            <span class="template-name">${template.name}</span>
-        `;
-        item.addEventListener('click', () => selectTemplate(key));
-        grid.appendChild(item);
-    });
-}
-
-function selectTemplate(templateKey) {
-    currentTemplate = templateKey;
-    document.querySelectorAll('.template-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.template === templateKey);
-    });
-
-    if (generatedQRData) {
-        renderQRWithFrame(generatedQRData);
-    }
-}
-
-// ============================================
 // EVENT LISTENERS
 // ============================================
 function initEventListeners() {
@@ -272,45 +142,24 @@ function formatAmountInput() {
 // ============================================
 // VietQR EMVCo GENERATOR (NAPAS Standard)
 // ============================================
-
-/**
- * Generate VietQR string following EMVCo specification
- * Format: TLV (Tag-Length-Value)
- * Reference: https://www.vietqr.io
- */
 function generateVietQRString(bankBin, accountNumber, amount, memo) {
-    // Helper function to create TLV field
     function tlv(id, value) {
         const len = value.length.toString().padStart(2, '0');
         return id + len + value;
     }
 
-    // ID 00: Payload Format Indicator (Fixed: "01")
     const field00 = tlv("00", "01");
-
-    // ID 01: Point of Initiation Method ("11" = Static, "12" = Dynamic)
     const field01 = tlv("01", "12");
 
-    // ID 38: Merchant Account Information (VietQR/NAPAS)
-    // Sub-field 00: GUID (NAPAS BNB ID)
     const subField38_00 = tlv("00", "A000000727");
-
-    // Sub-field 01: Beneficiary Organization
-    // Contains: 00 = BIN (acquirer ID), 01 = Account Number
     const beneficiaryInfo = tlv("00", bankBin) + tlv("01", accountNumber);
     const subField38_01 = tlv("01", beneficiaryInfo);
-
-    // Sub-field 02: Service Code (QRIBFTTA = Transfer to Account)
     const subField38_02 = tlv("02", "QRIBFTTA");
-
-    // Combine field 38
     const field38Content = subField38_00 + subField38_01 + subField38_02;
     const field38 = tlv("38", field38Content);
 
-    // ID 53: Transaction Currency (704 = VND)
     const field53 = tlv("53", "704");
 
-    // ID 54: Transaction Amount (optional)
     let field54 = "";
     if (amount) {
         const amountValue = amount.replace(/[^\d]/g, '');
@@ -319,35 +168,24 @@ function generateVietQRString(bankBin, accountNumber, amount, memo) {
         }
     }
 
-    // ID 58: Country Code (VN)
     const field58 = tlv("58", "VN");
 
-    // ID 62: Additional Data Field Template (optional)
     let field62 = "";
     if (memo && memo.trim()) {
-        // Sub-field 08: Purpose of Transaction
         const memoClean = removeVietnameseDiacritics(memo.trim()).substring(0, 25);
         const subField62_08 = tlv("08", memoClean);
         field62 = tlv("62", subField62_08);
     }
 
-    // Assemble QR string (without CRC)
     let qrString = field00 + field01 + field38 + field53 + field54 + field58 + field62;
-
-    // ID 63: CRC (CRC-16/CCITT-FALSE)
-    // Add placeholder for CRC calculation
     qrString += "6304";
-
-    // Calculate and append CRC
     const crc = calculateCRC16(qrString);
     qrString += crc;
 
-    console.log("Generated VietQR:", qrString);
     return qrString;
 }
 
 function calculateCRC16(str) {
-    // CRC-16/CCITT-FALSE (Polynomial: 0x1021, Init: 0xFFFF)
     let crc = 0xFFFF;
     const polynomial = 0x1021;
 
@@ -383,7 +221,6 @@ function generateQR() {
     const amount = document.getElementById('amount').value;
     const memo = document.getElementById('memo').value.trim();
 
-    // Validation
     if (!bankBin) {
         alert('Vui lòng chọn ngân hàng!');
         return;
@@ -393,16 +230,13 @@ function generateQR() {
         return;
     }
 
-    // Generate VietQR string
     const qrString = generateVietQRString(bankBin, accountNumber, amount, memo);
-
-    // Get bank info
     const selectedBank = BANKS.find(b => b.bin === bankBin);
 
-    // Store data for rendering
     generatedQRData = {
         qrString,
-        bankName: selectedBank?.shortName || '',
+        bankName: selectedBank?.name || '',
+        bankShortName: selectedBank?.shortName || '',
         bankLogo: selectedBank?.logo || '',
         accountNumber,
         accountName: accountName || 'Chủ tài khoản',
@@ -410,27 +244,30 @@ function generateQR() {
         memo: memo || ''
     };
 
-    // Render QR with frame
-    renderQRWithFrame(generatedQRData);
+    // Load bank logo then render
+    bankLogoLoaded = new Image();
+    bankLogoLoaded.crossOrigin = 'anonymous';
+    bankLogoLoaded.onload = () => renderVietQR(generatedQRData);
+    bankLogoLoaded.onerror = () => renderVietQR(generatedQRData);
+    bankLogoLoaded.src = generatedQRData.bankLogo;
 
-    // Show preview card
     document.getElementById('previewCard').classList.add('visible');
     document.getElementById('previewCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ============================================
-// RENDER QR WITH FRAME
+// RENDER STANDARD VIETQR
 // ============================================
-function renderQRWithFrame(data) {
+function renderVietQR(data) {
     const canvas = document.getElementById('qrCanvas');
     const ctx = canvas.getContext('2d');
-    const template = TEMPLATES[currentTemplate];
 
-    // Canvas size
+    // Canvas size - VietQR Standard ratio
     const width = 400;
-    const height = 520;
-    const qrSize = 240;
+    const height = 600;
+    const qrSize = 280;
     const padding = 30;
+    const borderRadius = 20;
 
     canvas.width = width;
     canvas.height = height;
@@ -438,16 +275,38 @@ function renderQRWithFrame(data) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Draw background based on template
-    drawTemplateBackground(ctx, width, height, template);
+    // Draw gradient border
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#00A650');  // Green
+    gradient.addColorStop(0.5, '#0066B3'); // Blue
+    gradient.addColorStop(1, '#00A650');   // Green
 
-    // Draw QR code container (white background for QR)
-    const qrX = (width - qrSize - 20) / 2;
-    const qrY = 80;
+    ctx.fillStyle = gradient;
+    roundRect(ctx, 0, 0, width, height, borderRadius, true, false);
 
-    // White background for QR (MANDATORY - ensures scannability)
+    // Draw white inner background
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(qrX, qrY, qrSize + 20, qrSize + 20);
+    roundRect(ctx, 8, 8, width - 16, height - 16, borderRadius - 4, true, false);
+
+    // Draw VietQR Logo at top
+    const vietqrLogoY = 25;
+    if (vietqrLogoLoaded && vietqrLogoLoaded.complete && vietqrLogoLoaded.naturalWidth > 0) {
+        const logoWidth = 140;
+        const logoHeight = 50;
+        ctx.drawImage(vietqrLogoLoaded, (width - logoWidth) / 2, vietqrLogoY, logoWidth, logoHeight);
+    } else {
+        // Fallback: Draw text logo
+        drawVietQRTextLogo(ctx, width / 2, vietqrLogoY + 35);
+    }
+
+    // QR code position
+    const qrX = (width - qrSize) / 2;
+    const qrY = 90;
+
+    // Draw QR code border
+    ctx.strokeStyle = '#1a3a5c';
+    ctx.lineWidth = 3;
+    roundRect(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 8, false, true);
 
     // Generate and draw QR code
     const qr = qrcode(0, 'M');
@@ -462,8 +321,8 @@ function renderQRWithFrame(data) {
         for (let col = 0; col < moduleCount; col++) {
             if (qr.isDark(row, col)) {
                 ctx.fillRect(
-                    qrX + 10 + col * moduleSize,
-                    qrY + 10 + row * moduleSize,
+                    qrX + col * moduleSize,
+                    qrY + row * moduleSize,
                     moduleSize,
                     moduleSize
                 );
@@ -471,217 +330,143 @@ function renderQRWithFrame(data) {
         }
     }
 
-    // Draw text info
-    const textY = qrY + qrSize + 50;
+    // Draw VietQR checkmark in center of QR
+    const centerX = width / 2;
+    const centerY = qrY + qrSize / 2;
+    const checkSize = 45;
+
+    // White circle background
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, checkSize / 2 + 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw checkmark
+    drawCheckmark(ctx, centerX, centerY, checkSize);
+
+    // Draw NAPAS 247 and Bank logo section
+    const logoSectionY = qrY + qrSize + 25;
+
+    // Draw NAPAS logo
+    if (napasLogoLoaded && napasLogoLoaded.complete && napasLogoLoaded.naturalWidth > 0) {
+        const napasWidth = 100;
+        const napasHeight = 35;
+        ctx.drawImage(napasLogoLoaded, width / 2 - napasWidth - 15, logoSectionY, napasWidth, napasHeight);
+    } else {
+        // Fallback text
+        ctx.fillStyle = '#1a3a5c';
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('napas', width / 2 - 20, logoSectionY + 20);
+        ctx.fillStyle = '#e31837';
+        ctx.fillText('247', width / 2 - 20, logoSectionY + 35);
+    }
+
+    // Separator line
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(width / 2, logoSectionY + 5);
+    ctx.lineTo(width / 2, logoSectionY + 35);
+    ctx.stroke();
+
+    // Draw Bank logo
+    if (bankLogoLoaded && bankLogoLoaded.complete && bankLogoLoaded.naturalWidth > 0) {
+        const bankLogoWidth = 100;
+        const bankLogoHeight = 35;
+        ctx.drawImage(bankLogoLoaded, width / 2 + 15, logoSectionY, bankLogoWidth, bankLogoHeight);
+    } else {
+        ctx.fillStyle = '#1a3a5c';
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(data.bankShortName, width / 2 + 20, logoSectionY + 25);
+    }
+
+    // Draw account info
+    const infoY = logoSectionY + 55;
     ctx.textAlign = 'center';
 
-    // Bank name
-    ctx.fillStyle = template.textColor;
-    ctx.font = 'bold 18px Inter, sans-serif';
-    ctx.fillText(data.bankName, width / 2, textY);
+    // Account name
+    ctx.fillStyle = '#333333';
+    ctx.font = '14px Inter, sans-serif';
+    ctx.fillText('Tên chủ TK: ' + data.accountName.toUpperCase(), width / 2, infoY);
 
     // Account number
-    ctx.font = '16px Inter, sans-serif';
-    ctx.fillText(data.accountNumber, width / 2, textY + 28);
+    ctx.fillStyle = '#0066B3';
+    ctx.font = 'bold 16px Inter, sans-serif';
+    ctx.fillText('Số TK: ' + data.accountNumber, width / 2, infoY + 25);
 
-    // Account name
-    ctx.font = '14px Inter, sans-serif';
-    ctx.fillStyle = template.accentColor;
-    ctx.fillText(data.accountName.toUpperCase(), width / 2, textY + 52);
+    // Bank name
+    ctx.fillStyle = '#666666';
+    ctx.font = '13px Inter, sans-serif';
+    const bankNameLines = wrapText(ctx, data.bankName, width - 60);
+    bankNameLines.forEach((line, i) => {
+        ctx.fillText(line, width / 2, infoY + 50 + (i * 18));
+    });
 
     // Amount if exists
     if (data.amount) {
-        ctx.font = 'bold 20px Inter, sans-serif';
-        ctx.fillStyle = template.textColor;
-        ctx.fillText(data.amount + ' VND', width / 2, textY + 82);
+        const amountY = infoY + 50 + (bankNameLines.length * 18) + 10;
+        ctx.fillStyle = '#00A650';
+        ctx.font = 'bold 18px Inter, sans-serif';
+        ctx.fillText('Số tiền: ' + data.amount + ' VND', width / 2, amountY);
     }
 
-    // Draw header
-    ctx.fillStyle = template.textColor;
-    ctx.font = 'bold 14px Inter, sans-serif';
-    ctx.fillText('Quét mã để thanh toán', width / 2, 50);
-
-    // Draw template decorations
-    drawTemplateDecorations(ctx, width, height, template);
+    // Footer
+    ctx.fillStyle = '#999999';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('Tạo bởi CHUM VietQR', width - 15, height - 18);
 }
 
-function drawTemplateBackground(ctx, width, height, template) {
-    // Draw gradient background if template has gradient
-    if (template.gradient && Array.isArray(template.gradient)) {
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        const colors = template.gradient;
+function drawVietQRTextLogo(ctx, x, y) {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-        if (template.hologram) {
-            // Hologram - rainbow gradient
-            colors.forEach((color, i) => {
-                gradient.addColorStop(i / (colors.length - 1), color);
-            });
-        } else if (template.aurora) {
-            // Aurora - vertical gradient
-            const auroraGrad = ctx.createLinearGradient(0, 0, 0, height);
-            colors.forEach((color, i) => {
-                auroraGrad.addColorStop(i / (colors.length - 1), color);
-            });
-            ctx.fillStyle = auroraGrad;
-            ctx.fillRect(0, 0, width, height);
-            return;
+    // V
+    ctx.fillStyle = '#e31837';
+    ctx.font = 'bold 36px Outfit, sans-serif';
+    ctx.fillText('V', x - 55, y);
+
+    // IET
+    ctx.fillStyle = '#0066B3';
+    ctx.fillText('IET', x - 10, y);
+
+    // QR
+    ctx.fillText('QR', x + 50, y);
+}
+
+function drawCheckmark(ctx, x, y, size) {
+    // Red checkmark like VietQR
+    ctx.fillStyle = '#e31837';
+    ctx.beginPath();
+    ctx.moveTo(x - size / 3, y);
+    ctx.lineTo(x - size / 8, y + size / 3);
+    ctx.lineTo(x + size / 3, y - size / 4);
+    ctx.lineTo(x + size / 3 - 4, y - size / 4 - 4);
+    ctx.lineTo(x - size / 8, y + size / 6);
+    ctx.lineTo(x - size / 3 + 4, y - 4);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function wrapText(ctx, text, maxWidth) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + ' ' + word).width;
+        if (width < maxWidth) {
+            currentLine += ' ' + word;
         } else {
-            // Standard 2-color gradient
-            gradient.addColorStop(0, colors[0]);
-            gradient.addColorStop(1, colors[colors.length - 1]);
-        }
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-
-        // Glass overlay effect
-        if (currentTemplate === 'glass') {
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            roundRect(ctx, 20, 20, width - 40, height - 40, 20, true, false);
-        }
-    } else {
-        // Solid background
-        ctx.fillStyle = template.bgColor;
-        ctx.fillRect(0, 0, width, height);
-    }
-
-    // Premium Black - gold border glow
-    if (template.premium) {
-        ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 20;
-        ctx.strokeStyle = '#ffd700';
-        ctx.lineWidth = 3;
-        roundRect(ctx, 15, 15, width - 30, height - 30, 20, false, true);
-        ctx.shadowColor = 'transparent';
-    }
-
-    // Neon Cyber - neon glow border
-    if (template.neon) {
-        ctx.shadowColor = '#00ff88';
-        ctx.shadowBlur = 25;
-        ctx.strokeStyle = '#00ff88';
-        ctx.lineWidth = 2;
-        roundRect(ctx, 12, 12, width - 24, height - 24, 15, false, true);
-
-        // Second neon line
-        ctx.shadowColor = '#ff00ff';
-        ctx.strokeStyle = '#ff00ff';
-        roundRect(ctx, 18, 18, width - 36, height - 36, 12, false, true);
-        ctx.shadowColor = 'transparent';
-    }
-
-    // Gold Elite - double gold border
-    if (template.gold) {
-        ctx.strokeStyle = '#d4af37';
-        ctx.lineWidth = 4;
-        roundRect(ctx, 10, 10, width - 20, height - 20, 20, false, true);
-        ctx.strokeStyle = '#f4e4bc';
-        ctx.lineWidth = 1;
-        roundRect(ctx, 16, 16, width - 32, height - 32, 17, false, true);
-    }
-
-    // Hologram - shimmer effect
-    if (template.hologram) {
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        for (let i = 0; i < 5; i++) {
-            ctx.beginPath();
-            ctx.moveTo(0, i * 120);
-            ctx.lineTo(width, i * 120 + 60);
-            ctx.lineTo(width, i * 120 + 80);
-            ctx.lineTo(0, i * 120 + 20);
-            ctx.closePath();
-            ctx.fill();
+            lines.push(currentLine);
+            currentLine = word;
         }
     }
-
-    // Aurora - add glow circles
-    if (template.aurora) {
-        ctx.globalAlpha = 0.3;
-        const auroraColors = ['#00d9ff', '#ff6bcb', '#00ff88'];
-        auroraColors.forEach((color, i) => {
-            ctx.beginPath();
-            ctx.arc(width * (0.2 + i * 0.3), 100, 80, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.fill();
-        });
-        ctx.globalAlpha = 1;
-    }
-
-    // Neumorphism effect
-    if (template.shadow && currentTemplate === 'neumorphism') {
-        ctx.shadowColor = '#a3b1c6';
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetX = 8;
-        ctx.shadowOffsetY = 8;
-        ctx.fillStyle = template.bgColor;
-        roundRect(ctx, 15, 15, width - 30, height - 30, 20, true, false);
-        ctx.shadowColor = 'transparent';
-    }
-
-    // Border for classic
-    if (currentTemplate === 'classic') {
-        ctx.strokeStyle = template.borderColor;
-        ctx.lineWidth = 2;
-        roundRect(ctx, 10, 10, width - 20, height - 20, 15, false, true);
-    }
-
-    // Dark mode inner glow
-    if (currentTemplate === 'dark') {
-        ctx.fillStyle = '#16213e';
-        roundRect(ctx, 15, 15, width - 30, height - 30, 15, true, false);
-    }
-}
-
-function drawTemplateDecorations(ctx, width, height, template) {
-    // Tết 2026 decorations
-    if (template.decoration === 'tet') {
-        ctx.fillStyle = '#c9282d';
-        ctx.font = '24px serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('🌸', 40, 40);
-        ctx.fillText('🌸', width - 40, 40);
-        ctx.fillText('🧧', 40, height - 30);
-        ctx.fillText('🧧', width - 40, height - 30);
-
-        // Gold accent line
-        ctx.strokeStyle = '#ffd700';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(60, height - 15);
-        ctx.lineTo(width - 60, height - 15);
-        ctx.stroke();
-
-        // Tết text
-        ctx.fillStyle = '#c9282d';
-        ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText('Chúc Mừng Năm Mới 2026', width / 2, height - 25);
-    }
-
-    // Premium decorations
-    if (template.premium) {
-        ctx.fillStyle = '#ffd700';
-        ctx.font = '16px serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('👑', width / 2, 30);
-    }
-
-    // Gold Elite crown
-    if (template.gold) {
-        ctx.fillStyle = '#d4af37';
-        ctx.font = '20px serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('🏆', width / 2, 35);
-    }
-
-    // Neon corner accents
-    if (template.neon) {
-        ctx.fillStyle = '#00ff88';
-        ctx.font = '14px monospace';
-        ctx.textAlign = 'left';
-        ctx.fillText('◢', 20, height - 15);
-        ctx.textAlign = 'right';
-        ctx.fillText('◣', width - 20, height - 15);
-    }
+    lines.push(currentLine);
+    return lines;
 }
 
 function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
@@ -707,7 +492,7 @@ function downloadQR() {
     const canvas = document.getElementById('qrCanvas');
     const link = document.createElement('a');
     const timestamp = new Date().toISOString().slice(0, 10);
-    link.download = `CHUM-VietQR-${timestamp}.png`;
+    link.download = `VietQR-${generatedQRData?.accountNumber || 'code'}-${timestamp}.png`;
     link.href = canvas.toDataURL('image/png', 1.0);
     link.click();
 }
