@@ -107,7 +107,31 @@
             <p class="preview-hint">👆 Nhấn vào ảnh để lưu về máy</p>
 
             <div class="qr-container" id="qrContainer">
-                <canvas id="qrCanvas" width="400" height="600"></canvas>
+                <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                    <div class="spinner"></div>
+                    <span>Đang tạo mã QR...</span>
+                </div>
+                <img id="qrImage" class="qr-image" alt="VietQR Code" style="display: none;">
+            </div>
+
+            <!-- Account Info Display -->
+            <div class="account-info">
+                <div class="info-row">
+                    <span class="info-label">Chủ TK:</span>
+                    <span class="info-value" id="infoAccountName">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Số TK:</span>
+                    <span class="info-value info-highlight" id="infoAccountNumber">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Ngân hàng:</span>
+                    <span class="info-value" id="infoBankName">-</span>
+                </div>
+                <div class="info-row" id="amountRow" style="display: none;">
+                    <span class="info-label">Số tiền:</span>
+                    <span class="info-value info-amount" id="infoAmount">-</span>
+                </div>
             </div>
 
             <div class="export-actions">
@@ -129,8 +153,7 @@
         <p class="footer-note">VietQR chuẩn NAPAS 247 · Quét được mọi app ngân hàng</p>
     </footer>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <!-- Scripts - No need for qrcode-generator anymore -->
     <script src="app.js"></script>
 </body>
 

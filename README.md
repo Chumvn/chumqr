@@ -1,50 +1,46 @@
-# 🎨 CHUM VietQR Frame Studio
+# 💳 CHUM VietQR Generator
 
-> Tạo mã QR thanh toán VietQR chuẩn NAPAS với nhiều template khung đẹp mắt
+> Tạo mã QR thanh toán VietQR chuẩn NAPAS - Sử dụng VietQR.io API
 
 [![GitHub Pages](https://img.shields.io/badge/Live-Demo-brightgreen)](https://chumvn.github.io/chumqr/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## ✨ Features
 
-- 🏦 **39+ Ngân hàng Việt Nam** - Hỗ trợ đầy đủ các ngân hàng phổ biến
-- 📱 **VietQR chuẩn NAPAS EMVCo** - Quét được bằng mọi app ngân hàng
-- 🎨 **12+ Template Premium** - Từ Classic đến VIP Black, Hologram, Neon...
+- 🏦 **65+ Ngân hàng Việt Nam** - Danh sách cập nhật trực tiếp từ VietQR.io API
+- 📱 **VietQR chuẩn NAPAS 247** - Quét được bằng mọi app ngân hàng
+- 🎨 **Neumorphism UI** - Giao diện đẹp, hiện đại
 - 🌓 **Dark/Light Mode** - Tự động theo system preference
-- 📥 **Xuất PNG 1 ảnh** - Click vào ảnh để lưu về máy
-- 🧧 **Template Tết 2026** - Chúc mừng năm mới!
-
-## 🖼️ Templates
-
-| Template | Mô tả |
-|----------|-------|
-| 📋 Classic | Minimalist, sạch sẽ |
-| 🌸 Soft UI | Neumorphism mềm mại |
-| 💎 Glass | Hiệu ứng kính trong |
-| 🌙 Dark | Nền tối thanh lịch |
-| ☁️ Floating | Gradient pastel |
-| 🧧 Tết 2026 | Đỏ vàng may mắn |
-| 👑 Premium Black | VIP đen vàng sang trọng |
-| ⚡ Neon Cyber | Cyberpunk neon glow |
-| 🌈 Hologram | Gradient cầu vồng |
-| 🔮 Aurora | Northern lights effect |
-| 💜 Gradient Pro | Purple-pink modern |
-| 🏆 Gold Elite | Vàng kim sang trọng |
+- 📥 **Xuất PNG** - Click vào ảnh hoặc nút để lưu
 
 ## 🚀 Quick Start
 
 1. Truy cập [https://chumvn.github.io/chumqr/](https://chumvn.github.io/chumqr/)
 2. Chọn ngân hàng
 3. Nhập số tài khoản
-4. Chọn template yêu thích
-5. Tạo QR → Click để lưu ảnh!
+4. Nhập tên chủ TK, số tiền, nội dung (tùy chọn)
+5. Bấm **Tạo mã VietQR** → Click ảnh để lưu!
 
 ## 🔧 Tech Stack
 
 - HTML5 / CSS3 / JavaScript (Vanilla)
-- [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) - QR generation
-- VietQR EMVCo Standard (NAPAS)
+- [VietQR.io Quick Link API](https://vietqr.io/) - QR generation
 - Neumorphism Design System
+
+## 🔗 VietQR.io API
+
+Ứng dụng sử dụng VietQR.io Quick Link API:
+
+```
+https://img.vietqr.io/image/{BANK_CODE}-{ACCOUNT_NO}-compact2.png
+  ?amount={AMOUNT}
+  &addInfo={DESCRIPTION}
+  &accountName={NAME}
+```
+
+**API Endpoints:**
+- Bank List: `https://api.vietqr.io/v2/banks`
+- QR Image: `https://img.vietqr.io/image/...`
 
 ## 📦 Local Development
 
@@ -53,10 +49,6 @@ git clone https://github.com/Chumvn/chumqr.git
 cd chumqr
 # Open index.html in browser
 ```
-
-## 🤝 Contributing
-
-Pull requests are welcome! For major changes, please open an issue first.
 
 ## 📄 License
 
