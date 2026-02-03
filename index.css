@@ -315,6 +315,36 @@ select.input-field {
     position: relative;
 }
 
+.btn-clear {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: var(--shadow-dark);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    z-index: 10;
+}
+
+.btn-clear:hover {
+    background: #e74c3c;
+    color: #fff;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.search-select-wrapper .input-field {
+    padding-right: 45px;
+}
+
 .search-dropdown {
     position: absolute;
     top: 100%;

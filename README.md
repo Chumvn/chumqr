@@ -1,4 +1,4 @@
-# 💳 CHUM QR Generator
+# 💳 CHUM VietQR Generator
 
 > Tạo mã QR thanh toán VietQR chuẩn NAPAS - Sử dụng VietQR.io API
 
@@ -63,4 +63,3 @@ MIT License - feel free to use for personal and commercial projects.
 ---
 
 ⭐ Star this repo if you find it useful!
-

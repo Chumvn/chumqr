@@ -122,6 +122,7 @@ function selectBank(item) {
     const searchInput = document.getElementById('bankSearch');
     const bankBinInput = document.getElementById('bankBin');
     const dropdown = document.getElementById('bankDropdown');
+    const clearBtn = document.getElementById('clearBank');
 
     selectedBank = {
         bin: item.dataset.bin,
@@ -133,6 +134,7 @@ function selectBank(item) {
     searchInput.value = `${selectedBank.shortName} - ${selectedBank.name}`;
     bankBinInput.value = selectedBank.bin;
     dropdown.classList.remove('show');
+    clearBtn.style.display = 'flex';
 }
 
 // ============================================
@@ -145,11 +147,21 @@ function initEventListeners() {
     document.getElementById('downloadBtn').addEventListener('click', downloadQR);
     document.getElementById('qrImage').addEventListener('click', downloadQR);
 
+    // Clear bank button
+    document.getElementById('clearBank').addEventListener('click', clearBankSelection);
+
     // Glassmorphism toggle
     document.getElementById('glassToggle').addEventListener('change', (e) => {
         isGlassEffect = e.target.checked;
         updateGlassEffect();
     });
+}
+
+function clearBankSelection() {
+    document.getElementById('bankSearch').value = '';
+    document.getElementById('bankBin').value = '';
+    document.getElementById('clearBank').style.display = 'none';
+    selectedBank = null;
 }
 
 // ============================================
