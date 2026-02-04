@@ -1,7 +1,7 @@
 /**
  * CHUM QR Generator
- * VietQR with Searchable Bank Dropdown
- * Designed by CHUM
+ * VietQR with Searchable Bank Dropdown & Glassmorphism Effect
+ * Designed by CHUM / GIANG PRO
  */
 
 // ============================================
@@ -10,6 +10,7 @@
 let BANKS = [];
 let generatedImageUrl = null;
 let selectedBank = null;
+let isGlassEffect = false;
 
 // ============================================
 // INIT
@@ -19,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBankList();
     initEventListeners();
     initBankSearch();
-    initMemoSuggestions();
 });
 
 // ============================================
@@ -149,29 +149,11 @@ function initEventListeners() {
 
     // Clear bank button
     document.getElementById('clearBank').addEventListener('click', clearBankSelection);
-}
 
-// ============================================
-// MEMO SUGGESTIONS
-// ============================================
-function initMemoSuggestions() {
-    const memoChips = document.querySelectorAll('.memo-chip');
-    const memoInput = document.getElementById('memo');
-    
-    memoChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-            // Remove selected class from all chips
-            memoChips.forEach(c => c.classList.remove('selected'));
-            // Add selected class to clicked chip
-            chip.classList.add('selected');
-            // Set memo input value
-            memoInput.value = chip.dataset.memo;
-        });
-    });
-    
-    // Clear selection when user types manually
-    memoInput.addEventListener('input', () => {
-        memoChips.forEach(c => c.classList.remove('selected'));
+    // Glassmorphism toggle
+    document.getElementById('glassToggle').addEventListener('change', (e) => {
+        isGlassEffect = e.target.checked;
+        updateGlassEffect();
     });
 }
 
@@ -213,6 +195,17 @@ function removeVietnameseDiacritics(str) {
         .toUpperCase();
 }
 
+// ============================================
+// GLASSMORPHISM EFFECT
+// ============================================
+function updateGlassEffect() {
+    const wrapper = document.getElementById('glassWrapper');
+    if (isGlassEffect) {
+        wrapper.classList.add('glass-active');
+    } else {
+        wrapper.classList.remove('glass-active');
+    }
+}
 
 // ============================================
 // GENERATE QR
@@ -272,6 +265,7 @@ function generateQR() {
     qrImage.onload = () => {
         loadingIndicator.style.display = 'none';
         qrImage.style.display = 'block';
+        updateGlassEffect();
     };
 
     qrImage.onerror = () => {
@@ -305,7 +299,27 @@ async function downloadQR() {
     const timestamp = new Date().toISOString().slice(0, 10);
     const accountNumber = document.getElementById('accountNumber').value.trim();
     const filename = `CHUMQR-${accountNumber || 'code'}-${timestamp}.png`;
-    downloadDirect(filename);
+
+    if (isGlassEffect) {
+        // Use html2canvas for glassmorphism effect
+        const wrapper = document.getElementById('glassWrapper');
+        try {
+            const canvas = await html2canvas(wrapper, {
+                backgroundColor: null,
+                scale: 2
+            });
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        } catch (error) {
+            console.error('Download failed:', error);
+            // Fallback to direct download
+            downloadDirect(filename);
+        }
+    } else {
+        downloadDirect(filename);
+    }
 }
 
 async function downloadDirect(filename) {
